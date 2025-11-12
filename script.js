@@ -6,7 +6,6 @@ const partes = {
     'd': { nombre: 'Tertia Pars', codigo: 'III' }
 };
 
-// Elementos del DOM
 let btnGenerar, loading, errorDiv, successDiv, previewSection, preview;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,14 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     successDiv = document.getElementById('success');
     previewSection = document.getElementById('previewSection');
     preview = document.getElementById('preview');
-
     btnGenerar.addEventListener('click', generarPDF);
-    
-    // Permitir generar con Enter
     document.getElementById('cuestion').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            generarPDF();
-        }
+        if (e.key === 'Enter') generarPDF();
     });
 });
 
@@ -64,32 +58,25 @@ async function generarPDF() {
     previewSection.classList.add('hidden');
 
     try {
-        // Construir URL
         const url = `https://hjg.com.ar/sumat/${parte}/c${cuestion}.html`;
-        
-        // Fetch con CORS proxy
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
         const response = await fetch(proxyUrl);
         
         if (!response.ok) {
-            throw new Error('No se pudo cargar la cuestión. Verifica que el número de cuestión exista para esta parte.');
+            throw new Error('No se pudo cargar la cuestión. Verifica que el número exista.');
         }
 
         const html = await response.text();
         const contenido = extraerContenido(html);
         
         if (!contenido.titulo) {
-            throw new Error('No se pudo extraer el contenido correctamente.');
+            throw new Error('No se pudo extraer el contenido.');
         }
 
-        // Mostrar vista previa
         mostrarVistaPrevia(contenido);
-
-        // Generar PDF
         await crearPDF(contenido, parte, cuestion);
-
         hideLoading();
-        showSuccess('¡PDF generado y descargado exitosamente!');
+        showSuccess('¡PDF generado exitosamente!');
 
     } catch (error) {
         hideLoading();
@@ -102,50 +89,22 @@ function extraerContenido(html) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     
-    const contenido = {
-        titulo: '',
-        prologo: '',
-        articulos: []
-    };
+    const contenido = { titulo: '', prologo: '', articulos: [] };
 
-    // Función auxiliar para limpiar texto
     function limpiarTexto(elemento) {
         if (!elemento) return '';
-        
-        // Clonar el elemento para no modificar el original
         const clone = elemento.cloneNode(true);
-        
-        // Eliminar scripts y estilos
-        const scriptsYEstilos = clone.querySelectorAll('script, style');
-        scriptsYEstilos.forEach(el => el.remove());
-        
-        // Obtener texto y limpiar
-        let texto = clone.textContent || '';
-        
-        // Normalizar espacios en blanco
-        texto = texto
-            .replace(/\s+/g, ' ')
-            .replace(/\u00A0/g, ' ') // non-breaking space
-            .trim();
-        
-        return texto;
+        clone.querySelectorAll('script, style, .lat').forEach(el => el.remove());
+        return (clone.textContent || '').replace(/\s+/g, ' ').trim();
     }
 
-    // Extraer título de la cuestión
     const tituloDiv = doc.querySelector('.qtit');
-    if (tituloDiv) {
-        contenido.titulo = limpiarTexto(tituloDiv);
-    }
+    if (tituloDiv) contenido.titulo = limpiarTexto(tituloDiv);
 
-    // Extraer prólogo
     const prologoDiv = doc.querySelector('#qprol');
-    if (prologoDiv) {
-        contenido.prologo = limpiarTexto(prologoDiv);
-    }
+    if (prologoDiv) contenido.prologo = limpiarTexto(prologoDiv);
 
-    // Extraer artículos
-    const articulos = doc.querySelectorAll('.art');
-    articulos.forEach((art) => {
+    doc.querySelectorAll('.art').forEach((art) => {
         const articulo = {
             titulo: '',
             objeciones: [],
@@ -154,47 +113,26 @@ function extraerContenido(html) {
             adObjeciones: []
         };
 
-        // Título del artículo
         const tituloArt = art.querySelector('.atit');
-        if (tituloArt) {
-            // Eliminar el enlace "lat"
-            const cloneTitulo = tituloArt.cloneNode(true);
-            const latLink = cloneTitulo.querySelector('.lat');
-            if (latLink) latLink.remove();
-            articulo.titulo = limpiarTexto(cloneTitulo);
-        }
+        if (tituloArt) articulo.titulo = limpiarTexto(tituloArt);
 
-        // Objeciones
-        const objeciones = art.querySelectorAll('.ao');
-        objeciones.forEach((obj, index) => {
+        art.querySelectorAll('.ao').forEach((obj, i) => {
             const texto = limpiarTexto(obj);
-            if (index === 0 && texto.includes('Objeciones')) return; // Saltar el encabezado
-            if (texto) articulo.objeciones.push(texto);
+            if (i > 0 || !texto.includes('Objeciones')) articulo.objeciones.push(texto);
         });
 
-        // Sed contra
         const sedContra = art.querySelector('.asedc');
-        if (sedContra) {
-            articulo.sedContra = limpiarTexto(sedContra);
-        }
+        if (sedContra) articulo.sedContra = limpiarTexto(sedContra);
 
-        // Respondo
         const respondo = art.querySelector('.aresp');
-        if (respondo) {
-            articulo.respondo = limpiarTexto(respondo);
-        }
+        if (respondo) articulo.respondo = limpiarTexto(respondo);
 
-        // Respuestas a las objeciones
-        const adObjeciones = art.querySelectorAll('.aado');
-        adObjeciones.forEach((ad, index) => {
+        art.querySelectorAll('.aado').forEach((ad, i) => {
             const texto = limpiarTexto(ad);
-            if (index === 0 && texto.includes('A las objeciones')) return; // Saltar el encabezado
-            if (texto) articulo.adObjeciones.push(texto);
+            if (i > 0 || !texto.includes('A las objeciones')) articulo.adObjeciones.push(texto);
         });
 
-        if (articulo.titulo) {
-            contenido.articulos.push(articulo);
-        }
+        if (articulo.titulo) contenido.articulos.push(articulo);
     });
 
     return contenido;
@@ -202,189 +140,88 @@ function extraerContenido(html) {
 
 function mostrarVistaPrevia(contenido) {
     let html = `<h4>${contenido.titulo}</h4>`;
-    
     if (contenido.prologo) {
-        html += `<p><strong>Prólogo:</strong><br>${contenido.prologo}</p>`;
+        html += `<p><strong>Prólogo</strong> (${contenido.prologo.substring(0, 150)}...)</p>`;
     }
-
-    html += `<p><strong>Total de artículos:</strong> ${contenido.articulos.length}</p>`;
-
-    contenido.articulos.forEach((art, index) => {
+    html += `<p><strong>Artículos:</strong> ${contenido.articulos.length}</p>`;
+    contenido.articulos.forEach(art => {
         html += `<h4>${art.titulo}</h4>`;
     });
-
     preview.innerHTML = html;
     previewSection.classList.remove('hidden');
 }
 
 async function crearPDF(contenido, parte, cuestion) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-    });
-
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20;
-    const maxWidth = pageWidth - (2 * margin);
-    let y = margin;
-
-    // Función para agregar nueva página si es necesario
-    function checkPageBreak(height = 10) {
-        if (y + height > pageHeight - margin) {
-            doc.addPage();
-            y = margin;
-            return true;
-        }
-        return false;
-    }
-
-    // Función para limpiar y normalizar texto
-    function cleanText(text) {
-        if (!text) return '';
-        // Reemplazar entidades HTML comunes
-        return text
-            .replace(/&nbsp;/g, ' ')
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"')
-            .replace(/&#39;/g, "'")
-            // Normalizar espacios múltiples
-            .replace(/\s+/g, ' ')
-            .trim();
-    }
-
-    // Función para agregar texto con wrap
-    function addText(text, fontSize, isBold = false, isItalic = false, align = 'left') {
-        text = cleanText(text);
-        if (!text) return;
-        
-        doc.setFontSize(fontSize);
-        doc.setFont('times', isBold ? 'bold' : (isItalic ? 'italic' : 'normal'));
-        
-        const lines = doc.splitTextToSize(text, maxWidth);
-        
-        lines.forEach((line, index) => {
-            checkPageBreak(fontSize * 0.5);
-            
-            let x = margin;
-            if (align === 'center') {
-                x = pageWidth / 2;
-            } else if (align === 'right') {
-                x = pageWidth - margin;
-            }
-            
-            doc.text(line, x, y, { align: align });
-            y += fontSize * 0.5;
-        });
-        
-        y += 3;
-    }
-
-    // Portada
-    doc.setFillColor(139, 69, 19); // Color marrón
-    doc.rect(0, 0, pageWidth, 60, 'F');
-    
-    doc.setTextColor(255, 248, 220);
-    doc.setFontSize(24);
-    doc.setFont('times', 'bold');
-    doc.text('SUMA TEOLÓGICA', pageWidth / 2, 25, { align: 'center' });
-    
-    doc.setFontSize(16);
-    doc.text('Santo Tomás de Aquino', pageWidth / 2, 35, { align: 'center' });
-    
-    doc.setFontSize(14);
     const parteInfo = partes[parte];
-    doc.text(`${parteInfo.nombre} (${parteInfo.codigo})`, pageWidth / 2, 45, { align: 'center' });
-    doc.text(`Cuestión ${cuestion}`, pageWidth / 2, 53, { align: 'center' });
-
-    doc.setTextColor(0, 0, 0);
-    y = 80;
-
-    // Título de la cuestión
-    addText(contenido.titulo.toUpperCase(), 16, true, false, 'center');
-    y += 5;
-
-    // Línea separadora
-    doc.setDrawColor(139, 69, 19);
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 10;
-
-    // Prólogo
-    if (contenido.prologo) {
-        addText('PRÓLOGO', 12, true);
-        addText(contenido.prologo, 10, false, false, 'justify');
-        y += 5;
-    }
-
-    // Artículos
-    contenido.articulos.forEach((articulo, index) => {
-        checkPageBreak(20);
+    const pdfContent = document.createElement('div');
+    pdfContent.style.cssText = 'font-family: Georgia, serif; padding: 20px; font-size: 11pt; line-height: 1.6; color: #000;';
+    
+    pdfContent.innerHTML = `
+        <div style="text-align: center; padding: 60px 20px; background: #8B4513; color: white; margin: -20px -20px 30px;">
+            <h1 style="font-size: 24pt; margin: 0 0 10px;">SUMA TEOLÓGICA</h1>
+            <h2 style="font-size: 16pt; margin: 0 0 10px;">Santo Tomás de Aquino</h2>
+            <h3 style="font-size: 14pt; margin: 0 0 5px;">${parteInfo.nombre} (${parteInfo.codigo})</h3>
+            <h3 style="font-size: 14pt; margin: 0;">Cuestión ${cuestion}</h3>
+        </div>
         
-        // Título del artículo
-        addText(articulo.titulo, 12, true);
-        y += 3;
-
-        // Objeciones
-        if (articulo.objeciones.length > 1) {
-            addText('OBJECIONES:', 11, true);
-            articulo.objeciones.slice(1).forEach((obj, i) => {
-                addText(obj, 10, false, false, 'justify');
-            });
-            y += 3;
-        }
-
-        // Sed contra
-        if (articulo.sedContra) {
-            addText(articulo.sedContra, 10, false, true, 'justify');
-            y += 3;
-        }
-
-        // Respondo
-        if (articulo.respondo) {
-            addText('RESPONDO:', 11, true);
-            addText(articulo.respondo, 10, false, false, 'justify');
-            y += 3;
-        }
-
-        // Respuestas a las objeciones
-        if (articulo.adObjeciones.length > 1) {
-            addText('RESPUESTAS A LAS OBJECIONES:', 11, true);
-            articulo.adObjeciones.slice(1).forEach((ad, i) => {
-                addText(ad, 10, false, false, 'justify');
-            });
-        }
-
-        // Separador entre artículos
-        if (index < contenido.articulos.length - 1) {
-            y += 5;
-            checkPageBreak(15);
-            doc.setDrawColor(210, 180, 140);
-            doc.setLineWidth(0.3);
-            doc.line(margin + 30, y, pageWidth - margin - 30, y);
-            y += 10;
-        }
-    });
-
-    // Pie de página en todas las páginas
-    const totalPages = doc.internal.getNumberOfPages();
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    for (let i = 1; i <= totalPages; i++) {
-        doc.setPage(i);
-        doc.text(
-            `Fuente: hjg.com.ar/sumat | Página ${i} de ${totalPages}`,
-            pageWidth / 2,
-            pageHeight - 10,
-            { align: 'center' }
-        );
+        <h2 style="text-align: center; color: #8B4513; margin: 20px 0; text-transform: uppercase;">${contenido.titulo}</h2>
+        <hr style="border: none; border-top: 2px solid #8B4513; margin: 20px 0;">
+    `;
+    
+    if (contenido.prologo) {
+        pdfContent.innerHTML += `
+            <h3 style="color: #8B4513; margin: 20px 0 10px;">PRÓLOGO</h3>
+            <p style="text-align: justify; margin: 10px 0;">${contenido.prologo}</p>
+        `;
     }
-
-    // Guardar PDF
-    const nombreArchivo = `Suma_Teologica_${parteInfo.codigo}_Cuestion_${cuestion}.pdf`;
-    doc.save(nombreArchivo);
+    
+    contenido.articulos.forEach((art, idx) => {
+        let html = `<div style="margin-top: 25px;"><h3 style="color: #8B4513; margin: 15px 0 10px;">${art.titulo}</h3>`;
+        
+        if (art.objeciones.length > 0) {
+            html += `<h4 style="color: #555; font-size: 11pt; margin: 15px 0 5px;">OBJECIONES:</h4>`;
+            art.objeciones.forEach(obj => {
+                html += `<p style="text-align: justify; margin: 8px 0;">${obj}</p>`;
+            });
+        }
+        
+        if (art.sedContra) {
+            html += `<p style="text-align: justify; margin: 15px 0; font-style: italic;"><strong>Contra esto:</strong> ${art.sedContra}</p>`;
+        }
+        
+        if (art.respondo) {
+            html += `<h4 style="color: #555; font-size: 11pt; margin: 15px 0 5px;">RESPONDO:</h4>`;
+            html += `<p style="text-align: justify; margin: 8px 0;">${art.respondo}</p>`;
+        }
+        
+        if (art.adObjeciones.length > 0) {
+            html += `<h4 style="color: #555; font-size: 11pt; margin: 15px 0 5px;">RESPUESTAS A LAS OBJECIONES:</h4>`;
+            art.adObjeciones.forEach(ad => {
+                html += `<p style="text-align: justify; margin: 8px 0;">${ad}</p>`;
+            });
+        }
+        
+        html += `</div>`;
+        if (idx < contenido.articulos.length - 1) {
+            html += `<hr style="border: none; border-top: 1px solid #DEB887; margin: 30px 60px;">`;
+        }
+        pdfContent.innerHTML += html;
+    });
+    
+    pdfContent.innerHTML += `
+        <div style="margin-top: 40px; text-align: center; font-size: 9pt; color: #666; border-top: 1px solid #ddd; padding-top: 10px;">
+            <p>Fuente: hjg.com.ar/sumat</p>
+        </div>
+    `;
+    
+    const opt = {
+        margin: [15, 15, 20, 15],
+        filename: `Suma_Teologica_${parteInfo.codigo}_Cuestion_${cuestion}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+    
+    await html2pdf().set(opt).from(pdfContent).save();
 }
