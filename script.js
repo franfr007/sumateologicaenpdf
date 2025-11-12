@@ -341,7 +341,6 @@ async function crearPDF(contenido, parte, cuestion) {
     }
 
     // Guardar PDF
-    const parteInfo = partes[parte];
     const nombreArchivo = `Suma_Teologica_${parteInfo.codigo}_Cuestion_${cuestion}.pdf`;
     doc.save(nombreArchivo);
 }
