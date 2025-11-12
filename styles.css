@@ -79,7 +79,8 @@ label {
 }
 
 select,
-input[type="number"] {
+input[type="number"],
+textarea {
     width: 100%;
     padding: 12px 15px;
     font-size: 1em;
@@ -92,10 +93,26 @@ input[type="number"] {
 }
 
 select:focus,
-input[type="number"]:focus {
+input[type="number"]:focus,
+textarea:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+}
+
+textarea {
+    resize: vertical;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+small {
+    font-size: 0.85em;
+}
+
+small a {
+    color: var(--primary-color);
+    font-weight: bold;
 }
 
 .btn-primary {
