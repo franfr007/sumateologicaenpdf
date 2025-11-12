@@ -58,7 +58,7 @@ async function generarHTML() {
 
     try {
         const url = `https://hjg.com.ar/sumat/${parte}/c${cuestion}.html`;
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
         const response = await fetch(proxyUrl);
         
         if (!response.ok) {
