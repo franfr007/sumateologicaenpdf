@@ -108,16 +108,39 @@ function extraerContenido(html) {
         articulos: []
     };
 
+    // Función auxiliar para limpiar texto
+    function limpiarTexto(elemento) {
+        if (!elemento) return '';
+        
+        // Clonar el elemento para no modificar el original
+        const clone = elemento.cloneNode(true);
+        
+        // Eliminar scripts y estilos
+        const scriptsYEstilos = clone.querySelectorAll('script, style');
+        scriptsYEstilos.forEach(el => el.remove());
+        
+        // Obtener texto y limpiar
+        let texto = clone.textContent || '';
+        
+        // Normalizar espacios en blanco
+        texto = texto
+            .replace(/\s+/g, ' ')
+            .replace(/\u00A0/g, ' ') // non-breaking space
+            .trim();
+        
+        return texto;
+    }
+
     // Extraer título de la cuestión
     const tituloDiv = doc.querySelector('.qtit');
     if (tituloDiv) {
-        contenido.titulo = tituloDiv.textContent.trim();
+        contenido.titulo = limpiarTexto(tituloDiv);
     }
 
     // Extraer prólogo
     const prologoDiv = doc.querySelector('#qprol');
     if (prologoDiv) {
-        contenido.prologo = prologoDiv.textContent.trim();
+        contenido.prologo = limpiarTexto(prologoDiv);
     }
 
     // Extraer artículos
@@ -138,33 +161,35 @@ function extraerContenido(html) {
             const cloneTitulo = tituloArt.cloneNode(true);
             const latLink = cloneTitulo.querySelector('.lat');
             if (latLink) latLink.remove();
-            articulo.titulo = cloneTitulo.textContent.trim();
+            articulo.titulo = limpiarTexto(cloneTitulo);
         }
 
         // Objeciones
         const objeciones = art.querySelectorAll('.ao');
         objeciones.forEach((obj, index) => {
-            if (index === 0 && obj.textContent.includes('Objeciones')) return; // Saltar el encabezado
-            articulo.objeciones.push(obj.textContent.trim());
+            const texto = limpiarTexto(obj);
+            if (index === 0 && texto.includes('Objeciones')) return; // Saltar el encabezado
+            if (texto) articulo.objeciones.push(texto);
         });
 
         // Sed contra
         const sedContra = art.querySelector('.asedc');
         if (sedContra) {
-            articulo.sedContra = sedContra.textContent.trim();
+            articulo.sedContra = limpiarTexto(sedContra);
         }
 
         // Respondo
         const respondo = art.querySelector('.aresp');
         if (respondo) {
-            articulo.respondo = respondo.textContent.trim();
+            articulo.respondo = limpiarTexto(respondo);
         }
 
         // Respuestas a las objeciones
         const adObjeciones = art.querySelectorAll('.aado');
         adObjeciones.forEach((ad, index) => {
-            if (index === 0 && ad.textContent.includes('A las objeciones')) return; // Saltar el encabezado
-            articulo.adObjeciones.push(ad.textContent.trim());
+            const texto = limpiarTexto(ad);
+            if (index === 0 && texto.includes('A las objeciones')) return; // Saltar el encabezado
+            if (texto) articulo.adObjeciones.push(texto);
         });
 
         if (articulo.titulo) {
@@ -216,8 +241,27 @@ async function crearPDF(contenido, parte, cuestion) {
         return false;
     }
 
+    // Función para limpiar y normalizar texto
+    function cleanText(text) {
+        if (!text) return '';
+        // Reemplazar entidades HTML comunes
+        return text
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            // Normalizar espacios múltiples
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
     // Función para agregar texto con wrap
     function addText(text, fontSize, isBold = false, isItalic = false, align = 'left') {
+        text = cleanText(text);
+        if (!text) return;
+        
         doc.setFontSize(fontSize);
         doc.setFont('times', isBold ? 'bold' : (isItalic ? 'italic' : 'normal'));
         
