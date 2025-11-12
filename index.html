@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador PDF - Suma Teológica</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📖 Generador de PDF</h1>
+            <h2>Suma Teológica de Santo Tomás de Aquino</h2>
+        </header>
+
+        <main>
+            <div class="form-section">
+                <div class="form-group">
+                    <label for="parte">Selecciona la Parte:</label>
+                    <select id="parte" name="parte">
+                        <option value="a">Prima Pars (Ia)</option>
+                        <option value="b">Prima Secundae (I-II)</option>
+                        <option value="c">Secunda Secundae (II-II)</option>
+                        <option value="d">Tertia Pars (III)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="cuestion">Número de Cuestión:</label>
+                    <input type="number" id="cuestion" name="cuestion" min="1" max="200" value="85" placeholder="Ej: 85">
+                </div>
+
+                <button id="btnGenerar" class="btn-primary">
+                    <span class="btn-icon">📄</span>
+                    Generar PDF
+                </button>
+
+                <div id="loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Descargando y procesando la cuestión...</p>
+                </div>
+
+                <div id="error" class="error hidden"></div>
+                <div id="success" class="success hidden"></div>
+            </div>
+
+            <div class="preview-section hidden" id="previewSection">
+                <h3>Vista Previa</h3>
+                <div id="preview" class="preview-content"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Fuente: <a href="https://hjg.com.ar/sumat/" target="_blank">hjg.com.ar/sumat</a></p>
+            <p>Desarrollado con ❤️ para facilitar el estudio de Santo Tomás</p>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

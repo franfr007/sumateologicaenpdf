@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - Generador PDF Suma Teológica</title>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .demo-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #8B4513;
+            text-align: center;
+        }
+        .screenshot {
+            width: 100%;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .feature-list {
+            background: #FFF8DC;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #8B4513;
+        }
+        .feature-list li {
+            margin: 10px 0;
+        }
+        .button-demo {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>📖 Generador de PDF - Suma Teológica</h1>
+        
+        <h2>Características principales:</h2>
+        <div class="feature-list">
+            <ul>
+                <li>✅ Selección de todas las partes de la Suma (Ia, I-II, II-II, III)</li>
+                <li>✅ Extracción automática desde hjg.com.ar</li>
+                <li>✅ Generación de PDF con formato profesional</li>
+                <li>✅ Vista previa del contenido</li>
+                <li>✅ Diseño responsive</li>
+                <li>✅ Descarga automática</li>
+            </ul>
+        </div>
+
+        <h2>Cómo usar:</h2>
+        <ol>
+            <li>Selecciona la parte (por ejemplo, "Prima Pars")</li>
+            <li>Ingresa el número de cuestión (por ejemplo, "85")</li>
+            <li>Haz clic en el botón "Generar PDF"</li>
+            <li>Espera mientras se descarga y procesa el contenido</li>
+            <li>El PDF se descargará automáticamente</li>
+        </ol>
+
+        <button class="button-demo" onclick="alert('Abre index.html para usar la aplicación!')">
+            📄 Ver Aplicación Real
+        </button>
+
+        <h2>Tecnología:</h2>
+        <p>La aplicación está construida con:</p>
+        <ul>
+            <li><strong>HTML5</strong> - Estructura semántica</li>
+            <li><strong>CSS3</strong> - Diseño elegante y responsive</li>
+            <li><strong>JavaScript Vanilla</strong> - Sin dependencias pesadas</li>
+            <li><strong>jsPDF</strong> - Generación de PDFs del lado del cliente</li>
+            <li><strong>AllOrigins</strong> - Proxy CORS para acceder al contenido</li>
+        </ul>
+
+        <h2>Ejemplo de URL construida:</h2>
+        <p>Para la <strong>Prima Pars, Cuestión 85</strong>:</p>
+        <code>https://hjg.com.ar/sumat/a/c85.html</code>
+
+        <h2>Deploy en GitHub Pages:</h2>
+        <ol>
+            <li>Crea un nuevo repositorio en GitHub</li>
+            <li>Sube los archivos: <code>index.html</code>, <code>styles.css</code>, <code>script.js</code></li>
+            <li>Ve a Settings → Pages</li>
+            <li>Selecciona la rama "main" como source</li>
+            <li>¡Tu app estará disponible públicamente!</li>
+        </ol>
+
+        <h2>Estructura del PDF generado:</h2>
+        <div class="feature-list">
+            <ul>
+                <li>📘 Portada con información de la parte y cuestión</li>
+                <li>📝 Título de la cuestión</li>
+                <li>📖 Prólogo (cuando existe)</li>
+                <li>📋 Artículos completos con:
+                    <ul>
+                        <li>Título del artículo</li>
+                        <li>Objeciones</li>
+                        <li>Sed Contra</li>
+                        <li>Respondo</li>
+                        <li>Respuestas a las objeciones</li>
+                    </ul>
+                </li>
+                <li>📄 Numeración de páginas</li>
+                <li>🔗 Fuente citada</li>
+            </ul>
+        </div>
+
+        <div style="background: #E8F4F8; padding: 20px; border-radius: 8px; margin-top: 30px;">
+            <h3 style="margin-top: 0; color: #2C5F7D;">💡 Nota importante:</h3>
+            <p>Esta aplicación no almacena ningún dato. Todo el procesamiento se realiza en el navegador del usuario. Los textos se obtienen directamente desde hjg.com.ar y se procesan localmente para generar el PDF.</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #ddd;">
+            <p><strong>Ad maiorem Dei gloriam</strong> ✝️</p>
+            <p style="font-size: 0.9em; color: #666;">
+                Desarrollado para facilitar el estudio de la Suma Teológica de Santo Tomás de Aquino
+            </p>
+        </div>
+    </div>
+</body>
+</html>
