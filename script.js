@@ -1,3 +1,5 @@
+const WORKER_URL = 'https://suma-teologica-proxy.francisco-fernandezr.workers.dev';
+
 const partes = {
     'a': { nombre: 'Prima Pars', codigo: 'Ia' },
     'b': { nombre: 'Prima Secundae', codigo: 'I-II' },
@@ -15,6 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
     previewSection = document.getElementById('previewSection');
     preview = document.getElementById('preview');
     btnGenerar.addEventListener('click', generarHTML);
+    document.getElementById('cuestion').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') generarHTML();
+    });
 });
 
 function showLoading() {
@@ -41,18 +46,12 @@ function showSuccess(mensaje) {
     errorDiv.classList.add('hidden');
 }
 
-function generarHTML() {
+async function generarHTML() {
     const parte = document.getElementById('parte').value;
     const cuestion = document.getElementById('cuestion').value;
-    const htmlInput = document.getElementById('htmlInput').value.trim();
-
-    if (!htmlInput) {
-        showError('Por favor, pega el HTML de la cuestión.');
-        return;
-    }
 
     if (!cuestion || cuestion < 1) {
-        showError('Por favor, ingresa un número de cuestión válido.');
+        showError('Ingresa un número de cuestión válido.');
         return;
     }
 
@@ -60,16 +59,23 @@ function generarHTML() {
     previewSection.classList.add('hidden');
 
     try {
-        const contenido = extraerContenido(htmlInput);
+        const targetUrl = `https://hjg.com.ar/sumat/${parte}/c${cuestion}.html`;
+        const proxyUrl = `${WORKER_URL}?url=${encodeURIComponent(targetUrl)}`;
+        
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error('No se pudo cargar la cuestión. Verifica el número.');
+        
+        const html = await response.text();
+        const contenido = extraerContenido(html);
         
         if (!contenido.titulo) {
-            throw new Error('No se pudo extraer el contenido. Verifica que hayas pegado el HTML completo.');
+            throw new Error('No se pudo extraer el contenido.');
         }
 
         mostrarVistaPrevia(contenido);
         descargarHTML(contenido, parte, cuestion);
         hideLoading();
-        showSuccess('¡HTML generado y descargado exitosamente!');
+        showSuccess('¡HTML generado exitosamente!');
 
     } catch (error) {
         hideLoading();
@@ -138,11 +144,11 @@ function extraerContenido(html) {
 function mostrarVistaPrevia(contenido) {
     let html = `<h4>${contenido.titulo}</h4>`;
     if (contenido.prologo) {
-        html += `<p><strong>Prólogo</strong> (${contenido.prologo.substring(0, 150)}...)</p>`;
+        html += `<p><strong>Prólogo:</strong> ${contenido.prologo.substring(0, 150)}...</p>`;
     }
     html += `<p><strong>Artículos:</strong> ${contenido.articulos.length}</p>`;
     contenido.articulos.forEach(art => {
-        html += `<h4>${art.titulo}</h4>`;
+        html += `<p>• ${art.titulo}</p>`;
     });
     preview.innerHTML = html;
     previewSection.classList.remove('hidden');
@@ -183,7 +189,6 @@ function descargarHTML(contenido, parte, cuestion) {
             background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
             color: white;
             margin: -40px -40px 40px;
-            border-radius: 0;
         }
         .portada h1 {
             font-size: 2.5em;
@@ -235,10 +240,6 @@ function descargarHTML(contenido, parte, cuestion) {
             border-top: 1px solid #DEB887;
             margin: 30px 60px;
         }
-        .objecion, .respuesta {
-            margin: 15px 0;
-            padding-left: 20px;
-        }
         .sed-contra {
             font-style: italic;
             margin: 20px 0;
@@ -255,12 +256,8 @@ function descargarHTML(contenido, parte, cuestion) {
             color: #666;
         }
         @media print {
-            body {
-                background: white;
-            }
-            .container {
-                box-shadow: none;
-            }
+            body { background: white; }
+            .container { box-shadow: none; }
         }
     </style>
 </head>
@@ -290,7 +287,7 @@ function descargarHTML(contenido, parte, cuestion) {
             ${art.objeciones.length > 0 ? `
             <div>
                 <h4>OBJECIONES:</h4>
-                ${art.objeciones.map(obj => `<p class="objecion">${obj}</p>`).join('')}
+                ${art.objeciones.map(obj => `<p>${obj}</p>`).join('')}
             </div>
             ` : ''}
             
@@ -310,7 +307,7 @@ function descargarHTML(contenido, parte, cuestion) {
             ${art.adObjeciones.length > 0 ? `
             <div>
                 <h4>RESPUESTAS A LAS OBJECIONES:</h4>
-                ${art.adObjeciones.map(ad => `<p class="respuesta">${ad}</p>`).join('')}
+                ${art.adObjeciones.map(ad => `<p>${ad}</p>`).join('')}
             </div>
             ` : ''}
         </article>
@@ -318,7 +315,7 @@ function descargarHTML(contenido, parte, cuestion) {
         `).join('')}
         
         <footer>
-            <p>Fuente: <a href="https://hjg.com.ar/sumat/" target="_blank">hjg.com.ar/sumat</a></p>
+            <p>Fuente: <a href="https://hjg.com.ar/sumat/">hjg.com.ar/sumat</a></p>
             <p>Suma Teológica de Santo Tomás de Aquino</p>
         </footer>
     </div>
