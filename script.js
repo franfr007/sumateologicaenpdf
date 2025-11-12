@@ -15,9 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
     previewSection = document.getElementById('previewSection');
     preview = document.getElementById('preview');
     btnGenerar.addEventListener('click', generarHTML);
-    document.getElementById('cuestion').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') generarHTML();
-    });
 });
 
 function showLoading() {
@@ -44,9 +41,15 @@ function showSuccess(mensaje) {
     errorDiv.classList.add('hidden');
 }
 
-async function generarHTML() {
+function generarHTML() {
     const parte = document.getElementById('parte').value;
     const cuestion = document.getElementById('cuestion').value;
+    const htmlInput = document.getElementById('htmlInput').value.trim();
+
+    if (!htmlInput) {
+        showError('Por favor, pega el HTML de la cuestión.');
+        return;
+    }
 
     if (!cuestion || cuestion < 1) {
         showError('Por favor, ingresa un número de cuestión válido.');
@@ -57,19 +60,10 @@ async function generarHTML() {
     previewSection.classList.add('hidden');
 
     try {
-        const url = `https://hjg.com.ar/sumat/${parte}/c${cuestion}.html`;
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-        const response = await fetch(proxyUrl);
-        
-        if (!response.ok) {
-            throw new Error('No se pudo cargar la cuestión. Verifica que el número exista.');
-        }
-
-        const html = await response.text();
-        const contenido = extraerContenido(html);
+        const contenido = extraerContenido(htmlInput);
         
         if (!contenido.titulo) {
-            throw new Error('No se pudo extraer el contenido.');
+            throw new Error('No se pudo extraer el contenido. Verifica que hayas pegado el HTML completo.');
         }
 
         mostrarVistaPrevia(contenido);
@@ -331,7 +325,6 @@ function descargarHTML(contenido, parte, cuestion) {
 </body>
 </html>`;
 
-    // Crear blob y descargar
     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
