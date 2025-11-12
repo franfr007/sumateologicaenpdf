@@ -1,4 +1,3 @@
-// Mapeo de partes
 const partes = {
     'a': { nombre: 'Prima Pars', codigo: 'Ia' },
     'b': { nombre: 'Prima Secundae', codigo: 'I-II' },
@@ -15,9 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     successDiv = document.getElementById('success');
     previewSection = document.getElementById('previewSection');
     preview = document.getElementById('preview');
-    btnGenerar.addEventListener('click', generarPDF);
+    btnGenerar.addEventListener('click', generarHTML);
     document.getElementById('cuestion').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') generarPDF();
+        if (e.key === 'Enter') generarHTML();
     });
 });
 
@@ -45,7 +44,7 @@ function showSuccess(mensaje) {
     errorDiv.classList.add('hidden');
 }
 
-async function generarPDF() {
+async function generarHTML() {
     const parte = document.getElementById('parte').value;
     const cuestion = document.getElementById('cuestion').value;
 
@@ -74,9 +73,9 @@ async function generarPDF() {
         }
 
         mostrarVistaPrevia(contenido);
-        await crearPDF(contenido, parte, cuestion);
+        descargarHTML(contenido, parte, cuestion);
         hideLoading();
-        showSuccess('¡PDF generado exitosamente!');
+        showSuccess('¡HTML generado y descargado exitosamente!');
 
     } catch (error) {
         hideLoading();
@@ -118,7 +117,9 @@ function extraerContenido(html) {
 
         art.querySelectorAll('.ao').forEach((obj, i) => {
             const texto = limpiarTexto(obj);
-            if (i > 0 || !texto.includes('Objeciones')) articulo.objeciones.push(texto);
+            if (i > 0 || !texto.includes('Objeciones')) {
+                if (texto) articulo.objeciones.push(texto);
+            }
         });
 
         const sedContra = art.querySelector('.asedc');
@@ -129,7 +130,9 @@ function extraerContenido(html) {
 
         art.querySelectorAll('.aado').forEach((ad, i) => {
             const texto = limpiarTexto(ad);
-            if (i > 0 || !texto.includes('A las objeciones')) articulo.adObjeciones.push(texto);
+            if (i > 0 || !texto.includes('A las objeciones')) {
+                if (texto) articulo.adObjeciones.push(texto);
+            }
         });
 
         if (articulo.titulo) contenido.articulos.push(articulo);
@@ -151,77 +154,191 @@ function mostrarVistaPrevia(contenido) {
     previewSection.classList.remove('hidden');
 }
 
-async function crearPDF(contenido, parte, cuestion) {
+function descargarHTML(contenido, parte, cuestion) {
     const parteInfo = partes[parte];
-    const pdfContent = document.createElement('div');
-    pdfContent.style.cssText = 'font-family: Georgia, serif; padding: 20px; font-size: 11pt; line-height: 1.6; color: #000;';
     
-    pdfContent.innerHTML = `
-        <div style="text-align: center; padding: 60px 20px; background: #8B4513; color: white; margin: -20px -20px 30px;">
-            <h1 style="font-size: 24pt; margin: 0 0 10px;">SUMA TEOLÓGICA</h1>
-            <h2 style="font-size: 16pt; margin: 0 0 10px;">Santo Tomás de Aquino</h2>
-            <h3 style="font-size: 14pt; margin: 0 0 5px;">${parteInfo.nombre} (${parteInfo.codigo})</h3>
-            <h3 style="font-size: 14pt; margin: 0;">Cuestión ${cuestion}</h3>
+    const htmlContent = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suma Teológica - ${parteInfo.codigo} - Cuestión ${cuestion}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Georgia, 'Times New Roman', serif;
+            line-height: 1.6;
+            color: #2C1810;
+            background: #FFF8DC;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .portada {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            color: white;
+            margin: -40px -40px 40px;
+            border-radius: 0;
+        }
+        .portada h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .portada h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            font-weight: normal;
+        }
+        .portada h3 {
+            font-size: 1.2em;
+            margin-top: 5px;
+            font-weight: normal;
+        }
+        .titulo-cuestion {
+            text-align: center;
+            color: #8B4513;
+            margin: 30px 0;
+            font-size: 1.8em;
+            text-transform: uppercase;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #8B4513;
+            margin: 20px 0;
+        }
+        h3 {
+            color: #8B4513;
+            margin: 25px 0 15px;
+            font-size: 1.4em;
+        }
+        h4 {
+            color: #555;
+            margin: 20px 0 10px;
+            font-size: 1.1em;
+        }
+        p {
+            text-align: justify;
+            margin: 15px 0;
+            line-height: 1.8;
+        }
+        .articulo {
+            margin: 40px 0;
+            padding: 20px 0;
+        }
+        .articulo-separador {
+            border: none;
+            border-top: 1px solid #DEB887;
+            margin: 30px 60px;
+        }
+        .objecion, .respuesta {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        .sed-contra {
+            font-style: italic;
+            margin: 20px 0;
+            padding: 15px;
+            background: #FFFACD;
+            border-left: 4px solid #FFD700;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 0.9em;
+            color: #666;
+        }
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="portada">
+            <h1>SUMA TEOLÓGICA</h1>
+            <h2>Santo Tomás de Aquino</h2>
+            <h3>${parteInfo.nombre} (${parteInfo.codigo})</h3>
+            <h3>Cuestión ${cuestion}</h3>
         </div>
         
-        <h2 style="text-align: center; color: #8B4513; margin: 20px 0; text-transform: uppercase;">${contenido.titulo}</h2>
-        <hr style="border: none; border-top: 2px solid #8B4513; margin: 20px 0;">
-    `;
-    
-    if (contenido.prologo) {
-        pdfContent.innerHTML += `
-            <h3 style="color: #8B4513; margin: 20px 0 10px;">PRÓLOGO</h3>
-            <p style="text-align: justify; margin: 10px 0;">${contenido.prologo}</p>
-        `;
-    }
-    
-    contenido.articulos.forEach((art, idx) => {
-        let html = `<div style="margin-top: 25px;"><h3 style="color: #8B4513; margin: 15px 0 10px;">${art.titulo}</h3>`;
+        <h2 class="titulo-cuestion">${contenido.titulo}</h2>
+        <hr>
         
-        if (art.objeciones.length > 0) {
-            html += `<h4 style="color: #555; font-size: 11pt; margin: 15px 0 5px;">OBJECIONES:</h4>`;
-            art.objeciones.forEach(obj => {
-                html += `<p style="text-align: justify; margin: 8px 0;">${obj}</p>`;
-            });
-        }
+        ${contenido.prologo ? `
+        <section>
+            <h3>PRÓLOGO</h3>
+            <p>${contenido.prologo}</p>
+        </section>
+        ` : ''}
         
-        if (art.sedContra) {
-            html += `<p style="text-align: justify; margin: 15px 0; font-style: italic;"><strong>Contra esto:</strong> ${art.sedContra}</p>`;
-        }
+        ${contenido.articulos.map((art, idx) => `
+        <article class="articulo">
+            <h3>${art.titulo}</h3>
+            
+            ${art.objeciones.length > 0 ? `
+            <div>
+                <h4>OBJECIONES:</h4>
+                ${art.objeciones.map(obj => `<p class="objecion">${obj}</p>`).join('')}
+            </div>
+            ` : ''}
+            
+            ${art.sedContra ? `
+            <div class="sed-contra">
+                <strong>Contra esto:</strong> ${art.sedContra}
+            </div>
+            ` : ''}
+            
+            ${art.respondo ? `
+            <div>
+                <h4>RESPONDO:</h4>
+                <p>${art.respondo}</p>
+            </div>
+            ` : ''}
+            
+            ${art.adObjeciones.length > 0 ? `
+            <div>
+                <h4>RESPUESTAS A LAS OBJECIONES:</h4>
+                ${art.adObjeciones.map(ad => `<p class="respuesta">${ad}</p>`).join('')}
+            </div>
+            ` : ''}
+        </article>
+        ${idx < contenido.articulos.length - 1 ? '<hr class="articulo-separador">' : ''}
+        `).join('')}
         
-        if (art.respondo) {
-            html += `<h4 style="color: #555; font-size: 11pt; margin: 15px 0 5px;">RESPONDO:</h4>`;
-            html += `<p style="text-align: justify; margin: 8px 0;">${art.respondo}</p>`;
-        }
-        
-        if (art.adObjeciones.length > 0) {
-            html += `<h4 style="color: #555; font-size: 11pt; margin: 15px 0 5px;">RESPUESTAS A LAS OBJECIONES:</h4>`;
-            art.adObjeciones.forEach(ad => {
-                html += `<p style="text-align: justify; margin: 8px 0;">${ad}</p>`;
-            });
-        }
-        
-        html += `</div>`;
-        if (idx < contenido.articulos.length - 1) {
-            html += `<hr style="border: none; border-top: 1px solid #DEB887; margin: 30px 60px;">`;
-        }
-        pdfContent.innerHTML += html;
-    });
-    
-    pdfContent.innerHTML += `
-        <div style="margin-top: 40px; text-align: center; font-size: 9pt; color: #666; border-top: 1px solid #ddd; padding-top: 10px;">
-            <p>Fuente: hjg.com.ar/sumat</p>
-        </div>
-    `;
-    
-    const opt = {
-        margin: [15, 15, 20, 15],
-        filename: `Suma_Teologica_${parteInfo.codigo}_Cuestion_${cuestion}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-    
-    await html2pdf().set(opt).from(pdfContent).save();
+        <footer>
+            <p>Fuente: <a href="https://hjg.com.ar/sumat/" target="_blank">hjg.com.ar/sumat</a></p>
+            <p>Suma Teológica de Santo Tomás de Aquino</p>
+        </footer>
+    </div>
+</body>
+</html>`;
+
+    // Crear blob y descargar
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Suma_Teologica_${parteInfo.codigo}_Cuestion_${cuestion}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
