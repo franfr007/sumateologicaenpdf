@@ -7,7 +7,8 @@ const partes = {
     'd': { nombre: 'Tertia Pars', codigo: 'III' }
 };
 
-let btnGenerar, loading, errorDiv, successDiv, previewSection, preview;
+let btnGenerar, loading, errorDiv, successDiv, previewSection, preview, btnDescargar, contenidoCompleto;
+let datosActuales = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     btnGenerar = document.getElementById('btnGenerar');
@@ -16,7 +17,15 @@ document.addEventListener('DOMContentLoaded', () => {
     successDiv = document.getElementById('success');
     previewSection = document.getElementById('previewSection');
     preview = document.getElementById('preview');
+    btnDescargar = document.getElementById('btnDescargar');
+    contenidoCompleto = document.getElementById('contenidoCompleto');
+    
     btnGenerar.addEventListener('click', generarHTML);
+    btnDescargar.addEventListener('click', () => {
+        if (datosActuales) {
+            descargarHTML(datosActuales.contenido, datosActuales.parte, datosActuales.cuestion);
+        }
+    });
     document.getElementById('cuestion').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') generarHTML();
     });
@@ -72,10 +81,9 @@ async function generarHTML() {
             throw new Error('No se pudo extraer el contenido.');
         }
 
-        mostrarVistaPrevia(contenido);
-        descargarHTML(contenido, parte, cuestion);
+        mostrarContenidoCompleto(contenido, parte, cuestion);
         hideLoading();
-        showSuccess('¡HTML generado exitosamente!');
+        showSuccess('¡Contenido cargado! Revisa y descarga cuando quieras.');
 
     } catch (error) {
         hideLoading();
@@ -152,6 +160,78 @@ function mostrarVistaPrevia(contenido) {
     });
     preview.innerHTML = html;
     previewSection.classList.remove('hidden');
+}
+
+function mostrarContenidoCompleto(contenido, parte, cuestion) {
+    const parteInfo = partes[parte];
+    
+    const htmlVisualizacion = `
+        <div class="portada-vista">
+            <h1>SUMA TEOLÓGICA</h1>
+            <h2>Santo Tomás de Aquino</h2>
+            <h3>${parteInfo.nombre} (${parteInfo.codigo})</h3>
+            <h3>Cuestión ${cuestion}</h3>
+        </div>
+        
+        <h2 class="titulo-cuestion">${contenido.titulo}</h2>
+        <hr>
+        
+        ${contenido.prologo ? `
+        <section>
+            <h3>PRÓLOGO</h3>
+            <p>${contenido.prologo}</p>
+        </section>
+        ` : ''}
+        
+        ${contenido.articulos.map((art, idx) => `
+        <article class="articulo">
+            <h3>${art.titulo}</h3>
+            
+            ${art.objeciones.length > 0 ? `
+            <div>
+                <h4>OBJECIONES:</h4>
+                ${art.objeciones.map(obj => `<p>${obj}</p>`).join('')}
+            </div>
+            ` : ''}
+            
+            ${art.sedContra ? `
+            <div class="sed-contra">
+                <strong>Contra esto:</strong> ${art.sedContra}
+            </div>
+            ` : ''}
+            
+            ${art.respondo ? `
+            <div>
+                <h4>RESPONDO:</h4>
+                <p>${art.respondo}</p>
+            </div>
+            ` : ''}
+            
+            ${art.adObjeciones.length > 0 ? `
+            <div>
+                <h4>RESPUESTAS A LAS OBJECIONES:</h4>
+                ${art.adObjeciones.map(ad => `<p>${ad}</p>`).join('')}
+            </div>
+            ` : ''}
+        </article>
+        ${idx < contenido.articulos.length - 1 ? '<hr class="articulo-separador">' : ''}
+        `).join('')}
+        
+        <div class="footer-vista">
+            <p>Fuente: <a href="https://hjg.com.ar/sumat/" target="_blank">hjg.com.ar/sumat</a></p>
+            <p>Suma Teológica de Santo Tomás de Aquino</p>
+        </div>
+    `;
+    
+    contenidoCompleto.innerHTML = htmlVisualizacion;
+    contenidoCompleto.parentElement.classList.remove('hidden');
+    btnDescargar.classList.remove('hidden');
+    
+    // Guardar datos para descarga posterior
+    datosActuales = { contenido, parte, cuestion };
+    
+    // Scroll suave al contenido
+    contenidoCompleto.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function descargarHTML(contenido, parte, cuestion) {
